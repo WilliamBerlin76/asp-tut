@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text.Json;
 using Tutorial.WebSite.Models;
 using Microsoft.AspNetCore.Hosting;
-
+using System.Security.Cryptography.X509Certificates;
 
 namespace Tutorial.WebSite.Services
 {
@@ -31,6 +31,38 @@ namespace Tutorial.WebSite.Services
                     {
                         PropertyNameCaseInsensitive = true
                     });
+            }
+        }
+
+        public void AddRating(string productId, int rating)
+        {
+            var products = GetProducts();
+
+            //LINQ - kinda like SQL
+            var query = products.First(x => x.Id == productId);
+
+            if (query.Ratings == null)
+            {
+                query.Ratings = new int[] { rating };
+            }
+            else
+            {
+                var ratings = query.Ratings.ToList();
+                ratings.Add(rating);
+                query.Ratings = ratings.ToArray();
+            }
+
+            using (var outputStream = File.OpenWrite(JsonFileName))
+            {
+                JsonSerializer.Serialize<IEnumerable<Product>>(
+                    new Utf8JsonWriter(outputStream, new JsonWriterOptions
+                    {
+                        SkipValidation = true,
+                        Indented = true
+                    }
+                    ),
+                    products
+                );
             }
         }
     }
